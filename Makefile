@@ -16,13 +16,16 @@ clean:
 
 sign: all
 	sudo $(MDIR)/source/scripts/sign-file sha256 \
-		/root/dkms.key /root/dkms.der ${MODULE_OBJ}
+		/var/lib/dkms/mok.key /var/lib/dkms/mok.pub ${MODULE_OBJ}
 
 rmmod:
 	lsmod | grep -q "^$(MODULE)\s" && sudo rmmod $(MODULE) || true
 
 insmod: all sign rmmod
 	sudo insmod ./$(MODULE_OBJ)
+
+mokImport:
+	sudo mokutil --import /var/lib/dkms/mok.pub 
 
 install:
 	$(MAKE) -C $(KDIR) M=$(MAKEFILE_DIR) modules_install
@@ -39,3 +42,14 @@ dkmsInstall: dkmsUninstall
 	sudo cp Kbuild dkms.conf Makefile mod.c $(DKMS_PATH)
 	sudo dkms add -m $(MODULE) -v $(VERSION)
 	sudo dkms install $(MODULE)/$(VERSION)
+
+dkmsInstallForce: dkmsUninstall
+	sudo mkdir -p $(DKMS_PATH)
+	sudo cp Kbuild dkms.conf Makefile mod.c $(DKMS_PATH)
+	sudo dkms add -m $(MODULE) -v $(VERSION)
+	sudo dkms install $(MODULE)/$(VERSION) --force
+
+fullInstall: all mokImport sign dkmsUninstall dkmsInstall
+	echo 'unlockdown' | sudo tee --append /etc/initramfs-tools/modules
+	sudo update-initramfs -u -k all
+		

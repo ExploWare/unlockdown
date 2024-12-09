@@ -15,9 +15,7 @@ distros. If you're on a different distro, you may need to edit the Makefile to
 compile and install the module.
 
 ```console
-$ make dkmsInstall
-$ echo 'unlockdown' | sudo tee --append /etc/initramfs-tools/modules
-$ sudo update-initramfs -u -k all
+$ make fullInstall
 ```
 
 Note: the module must be loaded in the initrd otherwise the kernel will not be
